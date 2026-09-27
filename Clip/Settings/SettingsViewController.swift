@@ -15,6 +15,7 @@ extension SettingsViewController
     private enum Section: CaseIterable
     {
         case historyLimit
+        case saveMode
         case location
     }
     
@@ -55,6 +56,10 @@ extension SettingsViewController
             let limit = HistoryLimit.allCases[indexPath.row]
             cell.accessoryType = (limit == UserDefaults.shared.historyLimit) ? .checkmark : .none
             
+        case .saveMode:
+            let mode = SaveMode.allCases[indexPath.row]
+            cell.accessoryType = (mode == UserDefaults.shared.saveMode) ? .checkmark : .none
+            
         case .location: break
         }
         
@@ -63,13 +68,18 @@ extension SettingsViewController
     
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath)
     {
-        guard Section.allCases[indexPath.section] == .historyLimit else { return }
-        
-        let historyLimit = HistoryLimit.allCases[indexPath.row]
-        UserDefaults.shared.historyLimit = historyLimit
-        
-        tableView.reloadData()
-        
-        self.dismiss(animated: true, completion: nil)
+        switch Section.allCases[indexPath.section]
+        {
+        case .historyLimit:
+            UserDefaults.shared.historyLimit = HistoryLimit.allCases[indexPath.row]
+            tableView.reloadData()
+            self.dismiss(animated: true, completion: nil)
+            
+        case .saveMode:
+            UserDefaults.shared.saveMode = SaveMode.allCases[indexPath.row]
+            tableView.reloadData()
+            
+        case .location: break
+        }
     }
 }

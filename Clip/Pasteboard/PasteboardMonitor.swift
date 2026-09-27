@@ -78,32 +78,50 @@ private extension PasteboardMonitor
                 // Don't present notifications for items copied from within Clip.
                 guard !UIPasteboard.general.contains(pasteboardTypes: [UTI.clipping]) else { return }
             }
-            
-            UNUserNotificationCenter.current().getNotificationSettings { (settings) in
-                if settings.soundSetting == .enabled
-                {
-                    UIDevice.current.vibrate()
-                }
-            }            
-            
-            let content = UNMutableNotificationContent()
-            content.categoryIdentifier = UNNotificationCategory.clipboardReaderIdentifier
-            content.title = NSLocalizedString("Clipboard Changed", comment: "")
-            content.body = NSLocalizedString("Swipe down to save to Clip.", comment: "")
-            
-            if let location = ApplicationMonitor.shared.locationManager.location
-            {
-                content.userInfo = [
-                    UNNotification.latitudeUserInfoKey: location.coordinate.latitude,
-                    UNNotification.longitudeUserInfoKey: location.coordinate.longitude
-                ]
+
+            guard UserDefaults.shared.saveMode == .automatic else {
+                self.presentSaveNotification()
+                return
             }
-            
-            let request = UNNotificationRequest(identifier: "ClipboardChanged", content: content, trigger: nil)
-            UNUserNotificationCenter.current().add(request) { (error) in
-                if let error = error {
-                    print(error)
+
+            DatabaseManager.shared.savePasteboard(location: ApplicationMonitor.shared.locationManager.location) { (result) in
+                switch result
+                {
+                case .success, .failure(PasteboardError.duplicateItem): break
+
+                // iOS can refuse clipboard reads from the background, so fall back to the notification extension, which reads it on screen.
+                case .failure: self.presentSaveNotification()
                 }
+            }
+        }
+    }
+
+    func presentSaveNotification()
+    {
+        UNUserNotificationCenter.current().getNotificationSettings { (settings) in
+            if settings.soundSetting == .enabled
+            {
+                UIDevice.current.vibrate()
+            }
+        }            
+        
+        let content = UNMutableNotificationContent()
+        content.categoryIdentifier = UNNotificationCategory.clipboardReaderIdentifier
+        content.title = NSLocalizedString("Clipboard Changed", comment: "")
+        content.body = NSLocalizedString("Swipe down to save to Clip.", comment: "")
+        
+        if let location = ApplicationMonitor.shared.locationManager.location
+        {
+            content.userInfo = [
+                UNNotification.latitudeUserInfoKey: location.coordinate.latitude,
+                UNNotification.longitudeUserInfoKey: location.coordinate.longitude
+            ]
+        }
+        
+        let request = UNNotificationRequest(identifier: "ClipboardChanged", content: content, trigger: nil)
+        UNUserNotificationCenter.current().add(request) { (error) in
+            if let error = error {
+                print(error)
             }
         }
     }
