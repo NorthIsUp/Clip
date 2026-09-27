@@ -29,5 +29,14 @@ jobs:
           DIST_P12: ${{ secrets.DIST_P12 }}
           P12_PASSWORD: ${{ secrets.P12_PASSWORD }}
         run: scripts/ci-signing.sh
+      - id: xcode
+        run: echo "version=$(xcodebuild -version | tr -s '\n ' '-')" >> "$GITHUB_OUTPUT"
+      # Content-addressed, so any older cache is a valid starting point; each run saves a fresh one.
+      # ponytail: the cache only grows; bump the key prefix if it gets big enough to slow restores.
+      - uses: actions/cache@v4
+        with:
+          path: build/DerivedData/CompilationCache.noindex
+          key: compilation-cache-${{ steps.xcode.outputs.version }}-${{ github.sha }}
+          restore-keys: compilation-cache-${{ steps.xcode.outputs.version }}-
       - name: Archive and upload
         run: scripts/testflight.sh ${{ github.event_name == 'pull_request' && '--no-upload' || '' }}
