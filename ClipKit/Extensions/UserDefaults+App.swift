@@ -18,6 +18,12 @@ import Roxas
     case _100 = 100
 }
 
+@objc public enum SaveMode: Int, CaseIterable
+{
+    case notification = 0
+    case automatic = 1
+}
+
 public extension UserDefaults
 {
     static let shared: UserDefaults = {
@@ -30,6 +36,7 @@ public extension UserDefaults
     @NSManaged var historyLimit: HistoryLimit
     @NSManaged var maximumClippingSize: Int
     @NSManaged var showLocationIcon: Bool
+    @NSManaged var saveMode: SaveMode
 }
 
 public extension UserDefaults
@@ -39,7 +46,8 @@ public extension UserDefaults
         self.register(defaults: [
             #keyPath(UserDefaults.historyLimit): HistoryLimit._25.rawValue,
             #keyPath(UserDefaults.maximumClippingSize): 10 * .bytesPerMegabyte,
-            #keyPath(UserDefaults.showLocationIcon): true
+            #keyPath(UserDefaults.showLocationIcon): true,
+            #keyPath(UserDefaults.saveMode): SaveMode.automatic.rawValue
         ])
     }
 }
