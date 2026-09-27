@@ -11,9 +11,11 @@ auth=(-allowProvisioningUpdates -authenticationKeyPath ~/.appstoreconnect/privat
 
 rm -rf build/Clip.xcarchive build/export
 # Roxas (submodule) still targets iOS 10, which current Xcode refuses to build.
+# The compilation cache is keyed on content, not mtime, so CI can reuse it across fresh checkouts.
 xcodebuild archive -quiet -project Clip.xcodeproj -scheme Clip -configuration Release \
-  -destination generic/platform=iOS -archivePath build/Clip.xcarchive "${auth[@]}" \
-  CURRENT_PROJECT_VERSION="${BUILD_NUMBER:-$(date -u +%Y%m%d%H%M)}" IPHONEOS_DEPLOYMENT_TARGET=17.0
+  -destination generic/platform=iOS -archivePath build/Clip.xcarchive -derivedDataPath build/DerivedData "${auth[@]}" \
+  CURRENT_PROJECT_VERSION="${BUILD_NUMBER:-$(date -u +%Y%m%d%H%M)}" IPHONEOS_DEPLOYMENT_TARGET=17.0 \
+  COMPILATION_CACHE_ENABLE_CACHING=YES
 
 [ "${1:-}" = --no-upload ] && exit 0
 xcodebuild -exportArchive -archivePath build/Clip.xcarchive -exportOptionsPlist scripts/ExportOptions.plist \
